@@ -12,12 +12,16 @@ public class gun : MonoBehaviour
     private int currentAmmo = -1;
     public float reloadTime = 1f;
     private float nextFireTime = 0f;
+    public bool isReloading = false;
 
 
     public Camera fpsCam;
     public ParticleSystem muzzleFlash;
     public GameObject impactEffect;
     public Text txtAmmoCount;
+
+    public Animator animator;
+
 
 
 
@@ -26,13 +30,18 @@ public class gun : MonoBehaviour
         nextFireTime = nextFireTime = 1f / firerate;
         muzzleFlash = gameObject.GetComponentInChildren<ParticleSystem>();
         fpsCam = gameObject.GetComponentInParent<Camera>();
+        animator = gameObject.GetComponent<Animator>();
         if (currentAmmo == -1)
             currentAmmo = maxAmmo;
     }
     // Update is called once per frame
     void Update()
     {
+
+        if (isReloading)
+            return;
         txtAmmoCount.text = currentAmmo.ToString();
+
         if (currentAmmo <= 0 || Input.GetKeyDown(KeyCode.R))
         {
             StartCoroutine(Reload());
@@ -60,18 +69,20 @@ public class gun : MonoBehaviour
                 Target.TakeDamage(damage);
             }
 
-            GameObject impactParticle = Instantiate( impactEffect, hitInfo.point, Quaternion.LookRotation(hitInfo.normal));
+            GameObject impactParticle = Instantiate(impactEffect, hitInfo.point, Quaternion.LookRotation(hitInfo.normal));
             Destroy(impactParticle, 1f);
         }
     }
 
     IEnumerator Reload()
     {
-        Debug.Log("Reloading");
+        isReloading = true;
+        animator.SetBool("Reloading", true);
         txtAmmoCount.text = "Reloading...";
-        yield return new WaitForSeconds(reloadTime);
-
-        Debug.Log("Reload Complete");
+        yield return new WaitForSeconds(reloadTime - 0.25f);
+        animator.SetBool("Reloading", false);
+        yield return new WaitForSeconds(0.25f);
+        isReloading = false;
         currentAmmo = maxAmmo;
     }
 }
